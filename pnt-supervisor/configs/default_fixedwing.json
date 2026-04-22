@@ -1,0 +1,28 @@
+{
+  "vehicle": {
+    "name": "fixedwing",
+    "max_speed_mps": 55.0,
+    "max_climb_mps": 15.0,
+    "max_turn_rate_dps": 45.0,
+    "nominal_update_rate_hz": 10.0
+  },
+  "thresholds": {
+    "max_msg_gap_s": 1.5,
+    "max_hdop": 2.0,
+    "max_vdop": 3.0,
+    "max_hacc_m": 6.0,
+    "max_vacc_m": 10.0,
+    "hard_fail_score": 0.95
+  },
+  "fusion": {
+    "score_decay_per_s": 0.15,
+    "hard_fail_hold_s": 3.0,
+    "recovering_threshold": 0.65,
+    "good_threshold": 0.88,
+    "detector_weights": {
+      "kinematics": 0.40,
+      "consistency": 0.30,
+      "signal_quality": 0.30
+    }
+  }
+}

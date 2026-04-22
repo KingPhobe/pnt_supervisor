@@ -77,6 +77,7 @@ class NMEAParser:
             yield self._finalize_epoch(current.observation)
 
     def _extract_timestamp(self, msg: pynmea2.NMEASentence) -> datetime | None:
+        had_date_before_message = self._current_date is not None
         if hasattr(msg, "datestamp") and msg.datestamp:
             self._current_date = msg.datestamp
         if hasattr(msg, "datetime") and getattr(msg, "datetime"):
@@ -84,6 +85,10 @@ class NMEAParser:
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             self._current_date = dt.date()
+            if not had_date_before_message and getattr(msg, "timestamp", None) is not None:
+                # Keep the first RMC epoch grouped with already-seen same-second
+                # messages (e.g., GGA) when no prior date context exists.
+                return datetime.combine(date(1970, 1, 1), msg.timestamp, tzinfo=timezone.utc)
             return dt.astimezone(timezone.utc)
 
         t: time | None = getattr(msg, "timestamp", None)

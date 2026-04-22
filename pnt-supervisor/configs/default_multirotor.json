@@ -1,0 +1,28 @@
+{
+  "vehicle": {
+    "name": "multirotor",
+    "max_speed_mps": 25.0,
+    "max_climb_mps": 8.0,
+    "max_turn_rate_dps": 120.0,
+    "nominal_update_rate_hz": 10.0
+  },
+  "thresholds": {
+    "max_msg_gap_s": 1.5,
+    "max_hdop": 2.5,
+    "max_vdop": 3.5,
+    "max_hacc_m": 5.0,
+    "max_vacc_m": 8.0,
+    "hard_fail_score": 0.95
+  },
+  "fusion": {
+    "score_decay_per_s": 0.2,
+    "hard_fail_hold_s": 3.0,
+    "recovering_threshold": 0.6,
+    "good_threshold": 0.85,
+    "detector_weights": {
+      "kinematics": 0.35,
+      "consistency": 0.35,
+      "signal_quality": 0.30
+    }
+  }
+}
