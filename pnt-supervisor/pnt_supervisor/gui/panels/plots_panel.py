@@ -57,14 +57,20 @@ class PlotsPanel(QWidget):
         key = self.METRICS[metric_name]
 
         if key == "nav_state":
-            ordered_states = ["UNKNOWN", "GOOD", "DEGRADED", "RECOVERING", "INVALID"]
-            y_values = [ordered_states.index(str(row.get("nav_state", "UNKNOWN"))) for row in self._rows]
-            ax.plot(x_values, y_values, linewidth=1.5)
-            ax.set_yticks(list(range(len(ordered_states))), ordered_states)
-        else:
-            y_values = [float(row.get(key, 0.0) or 0.0) for row in self._rows]
-            ax.plot(x_values, y_values, linewidth=1.5)
+            ordered_states = ["unknown", "good", "degraded", "recovering", "invalid"]
 
+            def _normalize_state(value: object) -> str:
+                raw = str(value or "unknown").strip()
+                if "." in raw:
+                    raw = raw.split(".")[-1]
+                raw = raw.lower()
+                if raw not in ordered_states:
+                    raw = "unknown"
+                return raw
+
+        y_values = [ordered_states.index(_normalize_state(row.get("nav_state", "unknown"))) for row in self._rows]
+        ax.plot(x_values, y_values, linewidth=1.5)
+        ax.set_yticks(list(range(len(ordered_states))), [s.upper() for s in ordered_states])
         ax.set_xlabel("t_sec")
         ax.set_ylabel(metric_name)
         ax.grid(True, alpha=0.3)
