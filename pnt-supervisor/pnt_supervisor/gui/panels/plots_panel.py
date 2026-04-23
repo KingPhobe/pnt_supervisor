@@ -68,9 +68,17 @@ class PlotsPanel(QWidget):
                     raw = "unknown"
                 return raw
 
-        y_values = [ordered_states.index(_normalize_state(row.get("nav_state", "unknown"))) for row in self._rows]
-        ax.plot(x_values, y_values, linewidth=1.5)
-        ax.set_yticks(list(range(len(ordered_states))), [s.upper() for s in ordered_states])
+            y_values = [
+                ordered_states.index(_normalize_state(row.get("nav_state", "unknown")))
+                for row in self._rows
+            ]
+            ax.plot(x_values, y_values, linewidth=1.5)
+            ax.set_yticks(list(range(len(ordered_states))), [s.upper() for s in ordered_states])
+
+        else:
+            y_values = [float(row.get(key, 0.0) or 0.0) for row in self._rows]
+            ax.plot(x_values, y_values, linewidth=1.5)
+
         ax.set_xlabel("t_sec")
         ax.set_ylabel(metric_name)
         ax.grid(True, alpha=0.3)
