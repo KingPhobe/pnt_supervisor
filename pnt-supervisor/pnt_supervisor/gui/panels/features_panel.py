@@ -20,6 +20,11 @@ class FeaturesPanel(QWidget):
             "speed_accel_residual": QLabel("-"),
             "speed_accel_ratio": QLabel("-"),
             "speed_accel_health": QLabel("-"),
+            "time_dt_mismatch": QLabel("-"),
+            "time_clock_drift_ppm": QLabel("-"),
+            "time_clock_fit_rms": QLabel("-"),
+            "time_motion_residual": QLabel("-"),
+            "time_consistency_score": QLabel("-"),
         }
 
         layout = QFormLayout()
@@ -31,6 +36,11 @@ class FeaturesPanel(QWidget):
         layout.addRow("Speed/accel residual (m/s²):", self._labels["speed_accel_residual"])
         layout.addRow("Speed/accel ratio:", self._labels["speed_accel_ratio"])
         layout.addRow("Speed/accel health:", self._labels["speed_accel_health"])
+        layout.addRow("Time dt mismatch (s):", self._labels["time_dt_mismatch"])
+        layout.addRow("Time clock drift (ppm):", self._labels["time_clock_drift_ppm"])
+        layout.addRow("Time clock fit RMS (s):", self._labels["time_clock_fit_rms"])
+        layout.addRow("Motion residual (m):", self._labels["time_motion_residual"])
+        layout.addRow("Time consistency score:", self._labels["time_consistency_score"])
         self.setLayout(layout)
 
     def update_features(self, latest_row: dict[str, object] | None) -> None:
@@ -59,6 +69,11 @@ class FeaturesPanel(QWidget):
         self._labels["speed_accel_residual"].setText(f"{residual:.3f}")
         self._labels["speed_accel_ratio"].setText(f"{ratio:.3f}")
         self._labels["speed_accel_health"].setText(f"{health:.3f}")
+        self._labels["time_dt_mismatch"].setText(f"{float(latest_row.get('time_dt_mismatch_s', 0.0) or 0.0):.3f}")
+        self._labels["time_clock_drift_ppm"].setText(f"{float(latest_row.get('time_clock_drift_ppm', 0.0) or 0.0):.3f}")
+        self._labels["time_clock_fit_rms"].setText(f"{float(latest_row.get('time_clock_fit_rms_s', 0.0) or 0.0):.3f}")
+        self._labels["time_motion_residual"].setText(f"{float(latest_row.get('time_motion_residual_m', 0.0) or 0.0):.3f}")
+        self._labels["time_consistency_score"].setText(f"{float(latest_row.get('detector_time_consistency_score', 0.0) or 0.0):.3f}")
 
     def clear(self) -> None:
         for label in self._labels.values():

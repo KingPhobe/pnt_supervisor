@@ -19,6 +19,9 @@ class PlotsPanel(QWidget):
         "IMU dynamic accel": "imu_dynamic_accel_mps2",
         "speed/accel residual": "residual_mps2",
         "speed/accel ratio": "ratio",
+        "time consistency score": "detector_time_consistency_score",
+        "clock drift ppm": "time_clock_drift_ppm",
+        "motion-time residual": "time_motion_residual_m",
         "state timeline": "nav_state",
     }
 

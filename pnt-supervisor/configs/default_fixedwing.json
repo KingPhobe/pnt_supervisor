@@ -23,7 +23,8 @@
       "kinematics": 0.4,
       "consistency": 0.3,
       "signal_quality": 0.3,
-      "speed_accel_consistency": 0.2
+      "speed_accel_consistency": 0.2,
+      "time_consistency": 0.2
     }
   },
   "speed_accel_consistency": {
@@ -42,5 +43,22 @@
     "accel_x_column": "IMU_AccX",
     "accel_y_column": "IMU_AccY",
     "accel_z_column": "IMU_AccZ"
+  },
+  "time_consistency": {
+    "enabled": true,
+    "window_s": 10.0,
+    "min_samples": 5,
+    "max_gps_time_gap_s": 2.0,
+    "max_gps_time_jump_s": 1.5,
+    "max_time_backwards_s": 0.05,
+    "max_time_freeze_s": 2.0,
+    "max_dt_mismatch_s": 0.25,
+    "max_clock_drift_ppm": 50.0,
+    "max_clock_residual_rms_s": 0.2,
+    "min_speed_for_motion_check_mps": 3.0,
+    "max_motion_time_residual_m": 10.0,
+    "max_implied_time_residual_s": 1.0,
+    "fault_score_threshold": 0.8,
+    "consecutive_windows_to_fault": 3
   }
 }

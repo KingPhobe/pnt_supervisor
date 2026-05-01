@@ -7,6 +7,7 @@ from .mode_flap import ModeFlapDetector
 from .stale_data import StaleDataDetector
 from .speed_accel_consistency import SpeedAccelConsistencyConfig, SpeedAccelConsistencyDetector
 from .statistical import StatisticalDetector
+from .time_consistency import TimeConsistencyConfig, TimeConsistencyDetector
 
 __all__ = [
     "Detector",
@@ -17,4 +18,6 @@ __all__ = [
     "StatisticalDetector",
     "SpeedAccelConsistencyConfig",
     "SpeedAccelConsistencyDetector",
+    "TimeConsistencyConfig",
+    "TimeConsistencyDetector",
 ]

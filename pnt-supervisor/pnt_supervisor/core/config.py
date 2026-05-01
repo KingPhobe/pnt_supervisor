@@ -72,6 +72,28 @@ class SpeedAccelConsistencyConfigModel(BaseModel):
     accel_z_column: str = "IMU_AccZ"
 
 
+class TimeConsistencyConfig(BaseModel):
+    """Configuration for GPS time consistency checks."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    window_s: float = 10.0
+    min_samples: int = 5
+    max_gps_time_gap_s: float = 2.0
+    max_gps_time_jump_s: float = 1.5
+    max_time_backwards_s: float = 0.05
+    max_time_freeze_s: float = 2.0
+    max_dt_mismatch_s: float = 0.25
+    max_clock_drift_ppm: float = 50.0
+    max_clock_residual_rms_s: float = 0.20
+    min_speed_for_motion_check_mps: float = 3.0
+    max_motion_time_residual_m: float = 10.0
+    max_implied_time_residual_s: float = 1.0
+    fault_score_threshold: float = 0.8
+    consecutive_windows_to_fault: int = 3
+
+
 class AppConfig(BaseModel):
     """Top-level app configuration container."""
 
@@ -81,3 +103,4 @@ class AppConfig(BaseModel):
     thresholds: ThresholdConfig = Field(default_factory=ThresholdConfig)
     fusion: FusionConfig = Field(default_factory=FusionConfig)
     speed_accel_consistency: SpeedAccelConsistencyConfigModel = Field(default_factory=SpeedAccelConsistencyConfigModel)
+    time_consistency: TimeConsistencyConfig = Field(default_factory=TimeConsistencyConfig)
