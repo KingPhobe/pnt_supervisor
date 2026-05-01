@@ -15,6 +15,10 @@ class PlotsPanel(QWidget):
         "jump distance": "jump_distance_m",
         "HDOP": "hdop",
         "num_sats": "num_sats",
+        "GPS accel": "gps_accel_mps2",
+        "IMU dynamic accel": "imu_dynamic_accel_mps2",
+        "speed/accel residual": "residual_mps2",
+        "speed/accel ratio": "ratio",
         "state timeline": "nav_state",
     }
 

@@ -12,7 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from pnt_supervisor.adapters import ArduPilotLogXLSXAdapter, NMEAReplayAdapter
+from pnt_supervisor.adapters import ArduPilotLogCSVAdapter, ArduPilotLogXLSXAdapter, NMEAReplayAdapter
 from pnt_supervisor.core.config import AppConfig
 from pnt_supervisor.evaluation import ReplayRunner
 
@@ -23,6 +23,8 @@ DEFAULT_CONFIG_PATH = REPO_ROOT / "configs" / "default_multirotor.json"
 def _build_adapter(input_path: Path, source_type: str):
     if source_type == "xlsx":
         return ArduPilotLogXLSXAdapter(input_path)
+    if source_type == "csv":
+        return ArduPilotLogCSVAdapter(input_path)
     if source_type == "nmea":
         return NMEAReplayAdapter(input_path)
     raise ValueError(f"Unsupported source type: {source_type}")
@@ -35,8 +37,8 @@ def _load_config(path: Path) -> AppConfig:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", required=True, type=Path, help="Input replay file (.xlsx, .txt/.log/.nmea)")
-    parser.add_argument("--source-type", required=True, choices=["xlsx", "nmea"], help="Input source type")
+    parser.add_argument("--input", required=True, type=Path, help="Input replay file (.xlsx, .csv, .txt/.log/.nmea)")
+    parser.add_argument("--source-type", required=True, choices=["xlsx", "csv", "nmea"], help="Input source type")
     parser.add_argument("--out-dir", required=True, type=Path, help="Directory where output reports are written")
     parser.add_argument(
         "--config",

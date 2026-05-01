@@ -48,6 +48,30 @@ class FusionConfig(BaseModel):
     )
 
 
+class SpeedAccelConsistencyConfigModel(BaseModel):
+    """Configuration for GPS speed-vs-IMU acceleration consistency detector."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = False
+    window_s: float = 5.0
+    min_samples: int = 5
+    gravity_mps2: float = 9.80665
+    imu_noise_floor_mps2: float = 0.25
+    warning_residual_mps2: float = 1.5
+    fault_residual_mps2: float = 3.0
+    warning_ratio: float = 2.0
+    fault_ratio: float = 3.5
+    consecutive_windows_to_flag: int = 3
+    eps: float = 1e-6
+    imu_window_stat: str = "median"
+    time_column: str = "timestamp"
+    gps_speed_column: str = "GPS_0_Spd"
+    accel_x_column: str = "IMU_AccX"
+    accel_y_column: str = "IMU_AccY"
+    accel_z_column: str = "IMU_AccZ"
+
+
 class AppConfig(BaseModel):
     """Top-level app configuration container."""
 
@@ -56,3 +80,4 @@ class AppConfig(BaseModel):
     vehicle: VehicleProfileConfig = Field(default_factory=VehicleProfileConfig)
     thresholds: ThresholdConfig = Field(default_factory=ThresholdConfig)
     fusion: FusionConfig = Field(default_factory=FusionConfig)
+    speed_accel_consistency: SpeedAccelConsistencyConfigModel = Field(default_factory=SpeedAccelConsistencyConfigModel)

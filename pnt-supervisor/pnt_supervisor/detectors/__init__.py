@@ -5,6 +5,7 @@ from .hard_gates import HardGatesDetector
 from .kinematic_anomaly import KinematicAnomalyDetector
 from .mode_flap import ModeFlapDetector
 from .stale_data import StaleDataDetector
+from .speed_accel_consistency import SpeedAccelConsistencyConfig, SpeedAccelConsistencyDetector
 from .statistical import StatisticalDetector
 
 __all__ = [
@@ -14,4 +15,6 @@ __all__ = [
     "ModeFlapDetector",
     "StaleDataDetector",
     "StatisticalDetector",
+    "SpeedAccelConsistencyConfig",
+    "SpeedAccelConsistencyDetector",
 ]

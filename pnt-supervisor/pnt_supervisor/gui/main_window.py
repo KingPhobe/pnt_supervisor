@@ -7,7 +7,7 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import QMainWindow, QMessageBox, QTabWidget
 
-from pnt_supervisor.adapters import ArduPilotLogXLSXAdapter, NMEAReplayAdapter
+from pnt_supervisor.adapters import ArduPilotLogCSVAdapter, ArduPilotLogXLSXAdapter, NMEAReplayAdapter
 from pnt_supervisor.evaluation.replay_runner import ReplayRunResult, ReplayRunner
 from pnt_supervisor.gui.panels import (
     ConfigPanel,
@@ -62,6 +62,8 @@ class MainWindow(QMainWindow):
     def _build_adapter(self, source_type: str, file_path: str):
         if source_type == "xlsx":
             return ArduPilotLogXLSXAdapter(file_path)
+        if source_type == "csv":
+            return ArduPilotLogCSVAdapter(file_path)
         return NMEAReplayAdapter(file_path)
 
     def _apply_result(self, result: ReplayRunResult) -> None:

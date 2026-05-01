@@ -22,7 +22,25 @@
     "detector_weights": {
       "kinematics": 0.35,
       "consistency": 0.35,
-      "signal_quality": 0.30
+      "signal_quality": 0.3,
+      "speed_accel_consistency": 0.2
     }
+  },
+  "speed_accel_consistency": {
+    "enabled": true,
+    "window_s": 5.0,
+    "min_samples": 5,
+    "gravity_mps2": 9.80665,
+    "imu_noise_floor_mps2": 0.25,
+    "warning_residual_mps2": 1.5,
+    "fault_residual_mps2": 3.0,
+    "warning_ratio": 2.0,
+    "fault_ratio": 3.5,
+    "consecutive_windows_to_flag": 3,
+    "time_column": "timestamp",
+    "gps_speed_column": "GPS_0_Spd",
+    "accel_x_column": "IMU_AccX",
+    "accel_y_column": "IMU_AccY",
+    "accel_z_column": "IMU_AccZ"
   }
 }
