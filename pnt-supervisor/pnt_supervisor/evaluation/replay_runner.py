@@ -18,6 +18,8 @@ from pnt_supervisor.detectors import (
     SpeedAccelConsistencyConfig,
     SpeedAccelConsistencyDetector,
     StatisticalDetector,
+    TimeConsistencyConfig,
+    TimeConsistencyDetector,
 )
 from pnt_supervisor.exports import TransitionEvent
 from pnt_supervisor.features import (
@@ -25,6 +27,7 @@ from pnt_supervisor.features import (
     QualityFeatureExtractor,
     RecoveryFeatureExtractor,
     TimingFeatureExtractor,
+    TimeConsistencyFeatureExtractor,
 )
 from pnt_supervisor.fusion.evidence_fuser import EvidenceFuser
 from pnt_supervisor.fusion.state_machine import SupervisorStateMachine
@@ -64,6 +67,10 @@ class ReplayRunner:
             TimingFeatureExtractor(),
             QualityFeatureExtractor(),
             RecoveryFeatureExtractor(),
+            TimeConsistencyFeatureExtractor(
+                window_s=getattr(getattr(self.config, "time_consistency", None), "window_s", 10.0),
+                min_samples=getattr(getattr(self.config, "time_consistency", None), "min_samples", 5),
+            ),
         ]
         if detectors is not None:
             self.detectors = detectors
@@ -82,6 +89,9 @@ class ReplayRunner:
                         SpeedAccelConsistencyConfig(**sac_cfg.model_dump())
                     )
                 )
+            tc_cfg = getattr(self.config, "time_consistency", None)
+            if tc_cfg is not None and getattr(tc_cfg, "enabled", False):
+                self.detectors.append(TimeConsistencyDetector(TimeConsistencyConfig(**tc_cfg.model_dump())))
         self.fuser = fuser or EvidenceFuser(config)
         self.state_machine = state_machine or SupervisorStateMachine(config)
         self.report_writer = report_writer or ReplayReportWriter()
@@ -139,6 +149,10 @@ class ReplayRunner:
                 (result.metrics for result in detector_results if result.detector_name == "speed_accel_consistency"),
                 {},
             )
+            time_metrics = next(
+                (result.metrics for result in detector_results if result.detector_name == "time_consistency"),
+                {},
+            )
             speed_accel_reason = next(
                 (
                     "|".join(result.reason_codes)
@@ -166,6 +180,14 @@ class ReplayRunner:
                     "fault_flag": int(speed_accel_metrics.get("fault_flag", 0.0)),
                     "health_score": speed_accel_metrics.get("health_score", 1.0),
                     "reason": speed_accel_reason,
+                    "time_dt_gps_s": feature_vector.values.get("time_dt_gps_s", 0.0),
+                    "time_dt_log_s": feature_vector.values.get("time_dt_log_s", 0.0),
+                    "time_dt_mismatch_s": time_metrics.get("time_dt_mismatch_s", feature_vector.values.get("time_dt_mismatch_s", 0.0)),
+                    "time_clock_drift_ppm": time_metrics.get("time_clock_drift_ppm", feature_vector.values.get("time_clock_drift_ppm", 0.0)),
+                    "time_clock_fit_rms_s": time_metrics.get("time_clock_fit_rms_s", feature_vector.values.get("time_clock_fit_rms_s", 0.0)),
+                    "time_motion_residual_m": time_metrics.get("time_motion_residual_m", feature_vector.values.get("time_motion_residual_m", 0.0)),
+                    "time_implied_residual_s": time_metrics.get("time_implied_residual_s", feature_vector.values.get("time_implied_residual_s", 0.0)),
+                    "detector_time_consistency_score": detector_scores.get("time_consistency", 0.0),
                     "fused_score": fused.nav_score,
                     "nav_state": snapshot.state.value,
                     "reasons": "|".join(fused.reasons),

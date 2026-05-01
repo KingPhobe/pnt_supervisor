@@ -5,6 +5,7 @@ from .kinematics import KinematicFeatureExtractor
 from .quality import QualityFeatureExtractor
 from .recovery import RecoveryFeatureExtractor
 from .timing import TimingFeatureExtractor
+from .time_consistency import TimeConsistencyFeatureExtractor
 
 __all__ = [
     "FeatureContext",
@@ -13,4 +14,5 @@ __all__ = [
     "QualityFeatureExtractor",
     "RecoveryFeatureExtractor",
     "TimingFeatureExtractor",
+    "TimeConsistencyFeatureExtractor",
 ]
