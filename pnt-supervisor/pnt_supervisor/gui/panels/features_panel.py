@@ -17,6 +17,9 @@ class FeaturesPanel(QWidget):
             "hdop": QLabel("-"),
             "stale_count": QLabel("-"),
             "flap_count": QLabel("-"),
+            "speed_accel_residual": QLabel("-"),
+            "speed_accel_ratio": QLabel("-"),
+            "speed_accel_health": QLabel("-"),
         }
 
         layout = QFormLayout()
@@ -25,6 +28,9 @@ class FeaturesPanel(QWidget):
         layout.addRow("HDOP:", self._labels["hdop"])
         layout.addRow("Stale count:", self._labels["stale_count"])
         layout.addRow("Flap count:", self._labels["flap_count"])
+        layout.addRow("Speed/accel residual (m/s²):", self._labels["speed_accel_residual"])
+        layout.addRow("Speed/accel ratio:", self._labels["speed_accel_ratio"])
+        layout.addRow("Speed/accel health:", self._labels["speed_accel_health"])
         self.setLayout(layout)
 
     def update_features(self, latest_row: dict[str, object] | None) -> None:
@@ -45,7 +51,14 @@ class FeaturesPanel(QWidget):
         self._labels["speed_mismatch"].setText(f"{speed_mismatch:.3f}")
         self._labels["hdop"].setText(f"{hdop:.3f}")
         self._labels["stale_count"].setText(str(stale_count))
+        residual = float(latest_row.get("residual_mps2", 0.0) or 0.0)
+        ratio = float(latest_row.get("ratio", 0.0) or 0.0)
+        health = float(latest_row.get("health_score", 1.0) or 1.0)
+
         self._labels["flap_count"].setText(str(flap_count))
+        self._labels["speed_accel_residual"].setText(f"{residual:.3f}")
+        self._labels["speed_accel_ratio"].setText(f"{ratio:.3f}")
+        self._labels["speed_accel_health"].setText(f"{health:.3f}")
 
     def clear(self) -> None:
         for label in self._labels.values():

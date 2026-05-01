@@ -29,6 +29,7 @@ class InputPanel(QWidget):
 
         self.nmea_radio = QRadioButton("NMEA file")
         self.xlsx_radio = QRadioButton("XLSX file")
+        self.csv_radio = QRadioButton("CSV file")
         self.nmea_radio.setChecked(True)
 
         self.file_edit = QLineEdit()
@@ -46,6 +47,7 @@ class InputPanel(QWidget):
         source_layout.addWidget(QLabel("Source type:"))
         source_layout.addWidget(self.nmea_radio)
         source_layout.addWidget(self.xlsx_radio)
+        source_layout.addWidget(self.csv_radio)
         source_layout.addStretch(1)
 
         file_layout = QHBoxLayout()
@@ -65,12 +67,18 @@ class InputPanel(QWidget):
         self.setLayout(layout)
 
     def _selected_source_type(self) -> str:
-        return "xlsx" if self.xlsx_radio.isChecked() else "nmea"
+        if self.xlsx_radio.isChecked():
+            return "xlsx"
+        if self.csv_radio.isChecked():
+            return "csv"
+        return "nmea"
 
     def _browse_file(self) -> None:
         source_type = self._selected_source_type()
         if source_type == "xlsx":
             filter_text = "Excel files (*.xlsx)"
+        elif source_type == "csv":
+            filter_text = "CSV files (*.csv)"
         else:
             filter_text = "NMEA files (*.txt *.log *.nmea)"
 

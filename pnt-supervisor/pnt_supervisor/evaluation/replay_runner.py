@@ -15,6 +15,8 @@ from pnt_supervisor.detectors import (
     KinematicAnomalyDetector,
     ModeFlapDetector,
     StaleDataDetector,
+    SpeedAccelConsistencyConfig,
+    SpeedAccelConsistencyDetector,
     StatisticalDetector,
 )
 from pnt_supervisor.exports import TransitionEvent
@@ -63,13 +65,23 @@ class ReplayRunner:
             QualityFeatureExtractor(),
             RecoveryFeatureExtractor(),
         ]
-        self.detectors = detectors or [
-            HardGatesDetector(),
-            KinematicAnomalyDetector(),
-            StaleDataDetector(),
-            ModeFlapDetector(),
-            StatisticalDetector(),
-        ]
+        if detectors is not None:
+            self.detectors = detectors
+        else:
+            self.detectors = [
+                HardGatesDetector(),
+                KinematicAnomalyDetector(),
+                StaleDataDetector(),
+                ModeFlapDetector(),
+                StatisticalDetector(),
+            ]
+            sac_cfg = getattr(self.config, "speed_accel_consistency", None)
+            if sac_cfg is not None and getattr(sac_cfg, "enabled", False):
+                self.detectors.append(
+                    SpeedAccelConsistencyDetector(
+                        SpeedAccelConsistencyConfig(**sac_cfg.model_dump())
+                    )
+                )
         self.fuser = fuser or EvidenceFuser(config)
         self.state_machine = state_machine or SupervisorStateMachine(config)
         self.report_writer = report_writer or ReplayReportWriter()
@@ -123,6 +135,18 @@ class ReplayRunner:
                 reason_histogram[reason] += 1
 
             detector_scores = {result.detector_name: result.score for result in detector_results}
+            speed_accel_metrics = next(
+                (result.metrics for result in detector_results if result.detector_name == "speed_accel_consistency"),
+                {},
+            )
+            speed_accel_reason = next(
+                (
+                    "|".join(result.reason_codes)
+                    for result in detector_results
+                    if result.detector_name == "speed_accel_consistency" and result.reason_codes
+                ),
+                "",
+            )
             epoch_rows.append(
                 {
                     "t_sec": obs.t_sec,
@@ -133,6 +157,15 @@ class ReplayRunner:
                     "msg_gap_s": obs.msg_gap_s,
                     **{k: feature_vector.values.get(k, 0.0) for k in FEATURE_COLUMNS},
                     **detector_scores,
+                    "gps_speed_mps": speed_accel_metrics.get("gps_speed_mps", obs.speed_mps),
+                    "gps_accel_mps2": speed_accel_metrics.get("gps_accel_mps2", 0.0),
+                    "imu_dynamic_accel_mps2": speed_accel_metrics.get("imu_dynamic_accel_mps2", 0.0),
+                    "residual_mps2": speed_accel_metrics.get("residual_mps2", 0.0),
+                    "ratio": speed_accel_metrics.get("ratio", 0.0),
+                    "warning_flag": int(speed_accel_metrics.get("warning_flag", 0.0)),
+                    "fault_flag": int(speed_accel_metrics.get("fault_flag", 0.0)),
+                    "health_score": speed_accel_metrics.get("health_score", 1.0),
+                    "reason": speed_accel_reason,
                     "fused_score": fused.nav_score,
                     "nav_state": snapshot.state.value,
                     "reasons": "|".join(fused.reasons),

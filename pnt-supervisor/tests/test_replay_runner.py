@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 from pnt_supervisor.adapters.base import ObservationAdapter
+from pnt_supervisor.core.config import AppConfig
 from pnt_supervisor.core.enums import FixType
 from pnt_supervisor.core.models import EpochObservation
 from pnt_supervisor.evaluation import ReplayRunner
@@ -110,3 +111,43 @@ def test_replay_runner_creates_exports_and_summary(tmp_path: Path) -> None:
     assert "invalid_events" in summary
     assert "degraded_events" in summary
     assert "reason_histogram" in summary
+
+
+def test_replay_runner_emits_speed_accel_columns_when_enabled(tmp_path: Path) -> None:
+    obs = []
+    for i in range(8):
+        obs.append(
+            EpochObservation(
+                t_sec=float(i),
+                source_name="synthetic",
+                fix_valid=True,
+                fix_type=FixType.FIX_3D,
+                lat_deg=37.0 + i * 0.000001,
+                lon_deg=-122.0,
+                alt_m=10.0,
+                speed_mps=float(i),
+                msg_gap_s=1.0,
+                hdop=0.9,
+                num_sats=10,
+                extras={
+                    "timestamp": float(i),
+                    "GPS_0_Spd": float(i),
+                    "IMU_AccX": 0.0,
+                    "IMU_AccY": 0.0,
+                    "IMU_AccZ": 10.80665,
+                },
+            )
+        )
+
+    cfg = AppConfig.model_validate({"speed_accel_consistency": {"enabled": True}})
+    result = ReplayRunner(SyntheticAdapter(obs), config=cfg).run(tmp_path)
+
+    row = result.epoch_rows[-1]
+    assert "gps_accel_mps2" in row
+    assert "imu_dynamic_accel_mps2" in row
+    assert "residual_mps2" in row
+    assert "ratio" in row
+    assert "warning_flag" in row
+    assert "fault_flag" in row
+    assert "health_score" in row
+    assert "reason" in row

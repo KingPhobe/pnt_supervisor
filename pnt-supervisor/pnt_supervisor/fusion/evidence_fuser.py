@@ -8,10 +8,11 @@ from typing import Any
 from pnt_supervisor.core.models import DetectorResult
 
 DEFAULT_DETECTOR_WEIGHTS: dict[str, float] = {
-    "stale_data": 0.25,
-    "kinematic_anomaly": 0.30,
-    "mode_flap": 0.20,
-    "statistical": 0.25,
+    "stale_data": 0.20,
+    "kinematic_anomaly": 0.25,
+    "mode_flap": 0.15,
+    "statistical": 0.20,
+    "speed_accel_consistency": 0.20,
 }
 
 
