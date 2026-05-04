@@ -3,6 +3,7 @@
 from .config import AppConfig, FusionConfig, ThresholdConfig, VehicleProfileConfig
 from .enums import FixType, NavState, SourceType
 from .models import DetectorResult, EpochObservation, FeatureVector, SupervisorDecision
+from .platform import PlatformConfig, PlatformType
 
 __all__ = [
     "AppConfig",
@@ -12,6 +13,8 @@ __all__ = [
     "FixType",
     "FusionConfig",
     "NavState",
+    "PlatformConfig",
+    "PlatformType",
     "SourceType",
     "SupervisorDecision",
     "ThresholdConfig",

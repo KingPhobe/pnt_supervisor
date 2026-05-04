@@ -23,6 +23,7 @@ class QualityFeatureExtractor(FeatureExtractor):
         self.fix_history: deque[bool] = deque(maxlen=transition_window)
 
     def extract(self, obs: EpochObservation, out: FeatureVector) -> FeatureVector:
+        out = self._prepare_output(obs, out)
         fix_valid_numeric = 1.0 if obs.fix_valid else 0.0
         self.fix_history.append(obs.fix_valid)
 

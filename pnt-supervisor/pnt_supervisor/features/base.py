@@ -7,10 +7,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Deque
 
-from pnt_supervisor.core.models import EpochObservation
-
-if TYPE_CHECKING:
-    from pnt_supervisor.core.models import FeatureVector
+from pnt_supervisor.core.models import EpochObservation, FeatureVector
 
 
 @dataclass(slots=True)
@@ -36,6 +33,10 @@ class FeatureExtractor(ABC):
 
     def __init__(self, *, window_size: int = 60) -> None:
         self.context = FeatureContext(maxlen=window_size)
+
+    def _prepare_output(self, obs: EpochObservation, out: FeatureVector) -> FeatureVector:
+        out.t_sec = obs.t_sec
+        return out
 
     @abstractmethod
     def extract(self, obs: EpochObservation, out: FeatureVector) -> FeatureVector:
