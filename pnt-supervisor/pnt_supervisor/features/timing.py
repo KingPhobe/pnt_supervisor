@@ -23,6 +23,7 @@ class TimingFeatureExtractor(FeatureExtractor):
         self.frozen_solution_count = 0
 
     def extract(self, obs: EpochObservation, out: FeatureVector) -> FeatureVector:
+        out = self._prepare_output(obs, out)
         prev = self.context.last_observation
 
         gap_s = max(0.0, obs.msg_gap_s)

@@ -17,6 +17,7 @@ class RecoveryFeatureExtractor(FeatureExtractor):
         self.state_history: deque[bool] = deque(maxlen=flap_window)
 
     def extract(self, obs: EpochObservation, out: FeatureVector) -> FeatureVector:
+        out = self._prepare_output(obs, out)
         if not obs.fix_valid:
             self.last_invalid_t = obs.t_sec
 
