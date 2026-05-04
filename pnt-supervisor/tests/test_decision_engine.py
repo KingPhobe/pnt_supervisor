@@ -39,6 +39,42 @@ def test_hover_valid_alone_stays_good() -> None:
     assert decision.nav_state == NavState.GOOD
 
 
+def test_quadcopter_hover_feature_combination_stays_good() -> None:
+    decision = DecisionEngine().decide(
+        FeatureVector(
+            flags={
+                "track_geometry_ambiguous": True,
+                "hover_valid": True,
+                "low_motion_suspicious": False,
+            }
+        )
+    )
+
+    assert decision.nav_state == NavState.GOOD
+    assert decision.reasons == []
+
+
+def test_track_geometry_ambiguous_without_hover_valid_gives_degraded() -> None:
+    decision = DecisionEngine().decide(
+        FeatureVector(
+            flags={
+                "track_geometry_ambiguous": True,
+                "hover_valid": False,
+            }
+        )
+    )
+
+    assert decision.nav_state == NavState.DEGRADED
+    assert "track_geometry_ambiguous" in decision.reasons
+
+
+def test_track_geometry_ambiguous_missing_hover_valid_gives_degraded() -> None:
+    decision = DecisionEngine().decide(FeatureVector(flags={"track_geometry_ambiguous": True}))
+
+    assert decision.nav_state == NavState.DEGRADED
+    assert "track_geometry_ambiguous" in decision.reasons
+
+
 def test_stale_count_above_threshold_gives_degraded() -> None:
     decision = DecisionEngine().decide(FeatureVector(values={"stale_count": 3.0}))
     assert decision.nav_state == NavState.DEGRADED

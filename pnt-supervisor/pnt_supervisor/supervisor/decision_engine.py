@@ -31,7 +31,6 @@ class DecisionEngine:
         degraded_flags = [
             "hdop_bad",
             "geometry_bad",
-            "track_geometry_ambiguous",
             "low_motion_suspicious",
         ]
 
@@ -48,6 +47,9 @@ class DecisionEngine:
         for name in degraded_flags:
             if flags.get(name, False):
                 reasons.append(name)
+
+        if flags.get("track_geometry_ambiguous", False) and not flags.get("hover_valid", False):
+            reasons.append("track_geometry_ambiguous")
 
         if values.get("stale_count", 0.0) > self.policy.max_stale_count:
             reasons.append("stale_count")
