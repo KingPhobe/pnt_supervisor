@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from pnt_supervisor.core.feature_keys import FeatureFlag, FeatureValue
-from pnt_supervisor.core.models import EpochObservation, FeatureVector
+from pnt_supervisor.core import EpochObservation, FeatureFlag, FeatureValue, FeatureVector
 
 from .base import FeatureExtractor
 
