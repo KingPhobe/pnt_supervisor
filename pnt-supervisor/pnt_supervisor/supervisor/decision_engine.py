@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 
-from pnt_supervisor.core.enums import NavState
-from pnt_supervisor.core.feature_keys import FeatureFlag, FeatureValue
-from pnt_supervisor.core.models import FeatureVector, SupervisorDecision
+from pnt_supervisor.core import FeatureFlag, FeatureValue, FeatureVector, NavState, SupervisorDecision
 
 
 @dataclass(slots=True)
