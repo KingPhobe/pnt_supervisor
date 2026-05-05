@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from pnt_supervisor.core.enums import NavState
+from pnt_supervisor.core.feature_keys import FeatureFlag, FeatureValue
 from pnt_supervisor.core.models import FeatureVector, SupervisorDecision
 
 
@@ -24,14 +25,14 @@ class DecisionEngine:
         values = features.values
 
         hard_invalid_flags = [
-            "timestamp_backwards",
-            "kinematic_time_invalid",
+            FeatureFlag.TIMESTAMP_BACKWARDS,
+            FeatureFlag.KINEMATIC_TIME_INVALID,
         ]
 
         degraded_flags = [
-            "hdop_bad",
-            "geometry_bad",
-            "low_motion_suspicious",
+            FeatureFlag.HDOP_BAD,
+            FeatureFlag.GEOMETRY_BAD,
+            FeatureFlag.LOW_MOTION_SUSPICIOUS,
         ]
 
         for name in hard_invalid_flags:
@@ -41,21 +42,21 @@ class DecisionEngine:
         if reasons:
             return SupervisorDecision(nav_state=NavState.INVALID, nav_score=self.policy.invalid_score, reasons=reasons, hard_fail_active=True)
 
-        if flags.get("reacq_unstable", False):
-            return SupervisorDecision(nav_state=NavState.RECOVERING, nav_score=self.policy.recovering_score, reasons=["reacq_unstable"], hard_fail_active=False)
+        if flags.get(FeatureFlag.REACQ_UNSTABLE, False):
+            return SupervisorDecision(nav_state=NavState.RECOVERING, nav_score=self.policy.recovering_score, reasons=[FeatureFlag.REACQ_UNSTABLE], hard_fail_active=False)
 
         for name in degraded_flags:
             if flags.get(name, False):
                 reasons.append(name)
 
-        if flags.get("track_geometry_ambiguous", False) and not flags.get("hover_valid", False):
-            reasons.append("track_geometry_ambiguous")
+        if flags.get(FeatureFlag.TRACK_GEOMETRY_AMBIGUOUS, False) and not flags.get(FeatureFlag.HOVER_VALID, False):
+            reasons.append(FeatureFlag.TRACK_GEOMETRY_AMBIGUOUS)
 
-        if values.get("stale_count", 0.0) > self.policy.max_stale_count:
-            reasons.append("stale_count")
+        if values.get(FeatureValue.STALE_COUNT, 0.0) > self.policy.max_stale_count:
+            reasons.append(FeatureValue.STALE_COUNT)
 
-        if values.get("state_flap_count", 0.0) > self.policy.max_state_flap_count:
-            reasons.append("state_flap_count")
+        if values.get(FeatureValue.STATE_FLAP_COUNT, 0.0) > self.policy.max_state_flap_count:
+            reasons.append(FeatureValue.STATE_FLAP_COUNT)
 
         if reasons:
             return SupervisorDecision(nav_state=NavState.DEGRADED, nav_score=self.policy.degraded_score, reasons=reasons, hard_fail_active=False)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 
+from pnt_supervisor.core.feature_keys import FeatureFlag, FeatureValue
 from pnt_supervisor.core.models import EpochObservation, FeatureVector
 
 from .base import FeatureExtractor
@@ -40,16 +41,16 @@ class QualityFeatureExtractor(FeatureExtractor):
 
         out.values.update(
             {
-                "fix_valid_numeric": fix_valid_numeric,
-                "num_sats": float(obs.num_sats),
-                "hdop": float(obs.hdop),
-                "fix_transition_count_short_window": float(transition_count),
+                FeatureValue.FIX_VALID_NUMERIC: fix_valid_numeric,
+                FeatureValue.NUM_SATS: float(obs.num_sats),
+                FeatureValue.HDOP: float(obs.hdop),
+                FeatureValue.FIX_TRANSITION_COUNT_SHORT_WINDOW: float(transition_count),
             }
         )
         out.flags.update(
             {
-                "hdop_bad": hdop_bad,
-                "geometry_bad": geometry_bad,
+                FeatureFlag.HDOP_BAD: hdop_bad,
+                FeatureFlag.GEOMETRY_BAD: geometry_bad,
             }
         )
 
