@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pnt_supervisor.core.feature_keys import FeatureFlag, FeatureValue
 from pnt_supervisor.core.models import EpochObservation, FeatureVector
 
 from .base import FeatureExtractor
@@ -54,13 +55,13 @@ class TimingFeatureExtractor(FeatureExtractor):
 
         out.values.update(
             {
-                "gap_s": gap_s,
-                "gap_ratio": gap_ratio,
-                "stale_count": float(self.stale_count),
-                "frozen_solution_count": float(self.frozen_solution_count),
+                FeatureValue.GAP_S: gap_s,
+                FeatureValue.GAP_RATIO: gap_ratio,
+                FeatureValue.STALE_COUNT: float(self.stale_count),
+                FeatureValue.FROZEN_SOLUTION_COUNT: float(self.frozen_solution_count),
             }
         )
-        out.flags["timestamp_backwards"] = timestamp_backwards
+        out.flags[FeatureFlag.TIMESTAMP_BACKWARDS] = timestamp_backwards
 
         self.context.append(obs)
         return out

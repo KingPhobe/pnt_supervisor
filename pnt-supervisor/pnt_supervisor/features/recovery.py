@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 
+from pnt_supervisor.core.feature_keys import FeatureFlag, FeatureValue
 from pnt_supervisor.core.models import EpochObservation, FeatureVector
 
 from .base import FeatureExtractor
@@ -39,11 +40,11 @@ class RecoveryFeatureExtractor(FeatureExtractor):
 
         out.values.update(
             {
-                "time_since_last_invalid": time_since_last_invalid,
-                "state_flap_count": float(state_flap_count),
+                FeatureValue.TIME_SINCE_LAST_INVALID: time_since_last_invalid,
+                FeatureValue.STATE_FLAP_COUNT: float(state_flap_count),
             }
         )
-        out.flags["reacq_unstable"] = reacq_unstable
+        out.flags[FeatureFlag.REACQ_UNSTABLE] = reacq_unstable
 
         self.context.append(obs)
         return out

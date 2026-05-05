@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 
+from pnt_supervisor.core.feature_keys import FeatureFlag, FeatureValue
 from pnt_supervisor.core.models import EpochObservation, FeatureVector
 from pnt_supervisor.core.platform import PlatformConfig
 
@@ -45,18 +46,18 @@ class KinematicFeatureExtractor(FeatureExtractor):
 
         if prev is None:
             out.values.update({
-                "jump_distance_m": 0.0,
-                "fd_speed_mps": 0.0,
-                "speed_mismatch_mps": 0.0,
-                "course_track_mismatch_deg": 0.0,
-                "climb_mismatch_mps": 0.0,
-                "turn_rate_degps": 0.0,
+                FeatureValue.JUMP_DISTANCE_M: 0.0,
+                FeatureValue.FD_SPEED_MPS: 0.0,
+                FeatureValue.SPEED_MISMATCH_MPS: 0.0,
+                FeatureValue.COURSE_TRACK_MISMATCH_DEG: 0.0,
+                FeatureValue.CLIMB_MISMATCH_MPS: 0.0,
+                FeatureValue.TURN_RATE_DEGPS: 0.0,
             })
             out.flags.update({
-                "kinematic_time_invalid": False,
-                "track_geometry_ambiguous": False,
-                "hover_valid": False,
-                "low_motion_suspicious": False,
+                FeatureFlag.KINEMATIC_TIME_INVALID: False,
+                FeatureFlag.TRACK_GEOMETRY_AMBIGUOUS: False,
+                FeatureFlag.HOVER_VALID: False,
+                FeatureFlag.LOW_MOTION_SUSPICIOUS: False,
             })
             self.context.append(obs)
             return out
@@ -64,18 +65,18 @@ class KinematicFeatureExtractor(FeatureExtractor):
         raw_dt = obs.t_sec - prev.t_sec
         if raw_dt <= 0:
             out.values.update({
-                "jump_distance_m": 0.0,
-                "fd_speed_mps": 0.0,
-                "speed_mismatch_mps": 0.0,
-                "course_track_mismatch_deg": 0.0,
-                "climb_mismatch_mps": 0.0,
-                "turn_rate_degps": 0.0,
+                FeatureValue.JUMP_DISTANCE_M: 0.0,
+                FeatureValue.FD_SPEED_MPS: 0.0,
+                FeatureValue.SPEED_MISMATCH_MPS: 0.0,
+                FeatureValue.COURSE_TRACK_MISMATCH_DEG: 0.0,
+                FeatureValue.CLIMB_MISMATCH_MPS: 0.0,
+                FeatureValue.TURN_RATE_DEGPS: 0.0,
             })
             out.flags.update({
-                "kinematic_time_invalid": True,
-                "track_geometry_ambiguous": True,
-                "hover_valid": False,
-                "low_motion_suspicious": False,
+                FeatureFlag.KINEMATIC_TIME_INVALID: True,
+                FeatureFlag.TRACK_GEOMETRY_AMBIGUOUS: True,
+                FeatureFlag.HOVER_VALID: False,
+                FeatureFlag.LOW_MOTION_SUSPICIOUS: False,
             })
             self.context.append(obs)
             return out
@@ -109,18 +110,18 @@ class KinematicFeatureExtractor(FeatureExtractor):
             low_motion_suspicious = False
 
         out.values.update({
-            "jump_distance_m": jump_distance_m,
-            "fd_speed_mps": fd_speed_mps,
-            "speed_mismatch_mps": speed_mismatch_mps,
-            "course_track_mismatch_deg": course_track_mismatch_deg,
-            "climb_mismatch_mps": climb_mismatch_mps,
-            "turn_rate_degps": turn_rate_degps,
+            FeatureValue.JUMP_DISTANCE_M: jump_distance_m,
+            FeatureValue.FD_SPEED_MPS: fd_speed_mps,
+            FeatureValue.SPEED_MISMATCH_MPS: speed_mismatch_mps,
+            FeatureValue.COURSE_TRACK_MISMATCH_DEG: course_track_mismatch_deg,
+            FeatureValue.CLIMB_MISMATCH_MPS: climb_mismatch_mps,
+            FeatureValue.TURN_RATE_DEGPS: turn_rate_degps,
         })
         out.flags.update({
-            "kinematic_time_invalid": False,
-            "track_geometry_ambiguous": track_geometry_ambiguous,
-            "hover_valid": hover_valid,
-            "low_motion_suspicious": low_motion_suspicious,
+            FeatureFlag.KINEMATIC_TIME_INVALID: False,
+            FeatureFlag.TRACK_GEOMETRY_AMBIGUOUS: track_geometry_ambiguous,
+            FeatureFlag.HOVER_VALID: hover_valid,
+            FeatureFlag.LOW_MOTION_SUSPICIOUS: low_motion_suspicious,
         })
 
         self.context.append(obs)
