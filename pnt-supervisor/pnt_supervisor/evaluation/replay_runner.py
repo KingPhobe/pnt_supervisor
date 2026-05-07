@@ -9,7 +9,6 @@ from typing import Any
 
 from pnt_supervisor.adapters.base import ObservationAdapter
 from pnt_supervisor.core.enums import NavState
-from pnt_supervisor.core.models import FeatureVector
 from pnt_supervisor.detectors import (
     HardGatesDetector,
     KinematicAnomalyDetector,
@@ -22,13 +21,7 @@ from pnt_supervisor.detectors import (
     TimeConsistencyDetector,
 )
 from pnt_supervisor.exports import TransitionEvent
-from pnt_supervisor.features import (
-    KinematicFeatureExtractor,
-    QualityFeatureExtractor,
-    RecoveryFeatureExtractor,
-    TimingFeatureExtractor,
-    TimeConsistencyFeatureExtractor,
-)
+from pnt_supervisor.features import FeaturePipeline, TimeConsistencyFeatureExtractor
 from pnt_supervisor.fusion.evidence_fuser import EvidenceFuser
 from pnt_supervisor.fusion.state_machine import SupervisorStateMachine
 
@@ -54,6 +47,8 @@ class ReplayRunner:
         adapter: ObservationAdapter,
         *,
         config: Any | None = None,
+        feature_pipeline: FeaturePipeline | None = None,
+        # Deprecated: use feature_pipeline instead.
         feature_extractors: list[Any] | None = None,
         detectors: list[Any] | None = None,
         fuser: EvidenceFuser | None = None,
@@ -62,16 +57,21 @@ class ReplayRunner:
     ) -> None:
         self.adapter = adapter
         self.config = config
-        self.feature_extractors = feature_extractors or [
-            KinematicFeatureExtractor(),
-            TimingFeatureExtractor(),
-            QualityFeatureExtractor(),
-            RecoveryFeatureExtractor(),
-            TimeConsistencyFeatureExtractor(
-                window_s=getattr(getattr(self.config, "time_consistency", None), "window_s", 10.0),
-                min_samples=getattr(getattr(self.config, "time_consistency", None), "min_samples", 5),
-            ),
-        ]
+        if feature_pipeline is not None and feature_extractors is not None:
+            raise ValueError("Pass either feature_pipeline or feature_extractors, not both.")
+        if feature_pipeline is not None:
+            self.feature_pipeline = feature_pipeline
+        elif feature_extractors is not None:
+            self.feature_pipeline = FeaturePipeline(feature_extractors)
+        else:
+            extractors = list(FeaturePipeline.default().extractors)
+            extractors.append(
+                TimeConsistencyFeatureExtractor(
+                    window_s=getattr(getattr(self.config, "time_consistency", None), "window_s", 10.0),
+                    min_samples=getattr(getattr(self.config, "time_consistency", None), "min_samples", 5),
+                )
+            )
+            self.feature_pipeline = FeaturePipeline(extractors)
         if detectors is not None:
             self.detectors = detectors
         else:
@@ -111,9 +111,7 @@ class ReplayRunner:
         degraded_events = 0
 
         for obs in self.adapter.iter_observations():
-            feature_vector = FeatureVector(t_sec=obs.t_sec)
-            for extractor in self.feature_extractors:
-                feature_vector = extractor.extract(obs, feature_vector)
+            feature_vector = self.feature_pipeline.extract(obs)
 
             detector_results = [det.evaluate(obs, feature_vector, self.config) for det in self.detectors]
             fused = self.fuser.fuse(detector_results)
