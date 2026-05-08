@@ -10,28 +10,14 @@ from typing import Any
 
 from pnt_supervisor.adapters.base import ObservationAdapter
 from pnt_supervisor.core.enums import NavState
-from pnt_supervisor.detectors import (
-    HardGatesDetector,
-    KinematicAnomalyDetector,
-    ModeFlapDetector,
-    StaleDataDetector,
-    SpeedAccelConsistencyConfig,
-    SpeedAccelConsistencyDetector,
-    StatisticalDetector,
-    TimeConsistencyConfig,
-    TimeConsistencyDetector,
-)
 from pnt_supervisor.exports import TransitionEvent
-from pnt_supervisor.features import (
-    FeatureExtractor,
-    FeaturePipeline,
-    TimeConsistencyFeatureExtractor,
-)
+from pnt_supervisor.features import FeatureExtractor, FeaturePipeline
 from pnt_supervisor.fusion.evidence_fuser import EvidenceFuser
 from pnt_supervisor.fusion.state_machine import SupervisorStateMachine
 
 from .protocols import DetectorLike
 from .replay_epoch_row import build_replay_epoch_row
+from .replay_pipeline_factory import build_default_detectors, build_default_feature_pipeline
 from .report_writer import ReplayReportWriter
 
 
@@ -68,35 +54,12 @@ class ReplayRunner:
         elif feature_extractors is not None:
             self.feature_pipeline = FeaturePipeline(list(feature_extractors))
         else:
-            extractors = list(FeaturePipeline.default().extractors)
-            extractors.append(
-                TimeConsistencyFeatureExtractor(
-                    window_s=getattr(getattr(self.config, "time_consistency", None), "window_s", 10.0),
-                    min_samples=getattr(getattr(self.config, "time_consistency", None), "min_samples", 5),
-                )
-            )
-            self.feature_pipeline = FeaturePipeline(extractors)
+            self.feature_pipeline = build_default_feature_pipeline(self.config)
         self.detectors: list[DetectorLike]
         if detectors is not None:
             self.detectors = list(detectors)
         else:
-            self.detectors = [
-                HardGatesDetector(),
-                KinematicAnomalyDetector(),
-                StaleDataDetector(),
-                ModeFlapDetector(),
-                StatisticalDetector(),
-            ]
-            sac_cfg = getattr(self.config, "speed_accel_consistency", None)
-            if sac_cfg is not None and getattr(sac_cfg, "enabled", False):
-                self.detectors.append(
-                    SpeedAccelConsistencyDetector(
-                        SpeedAccelConsistencyConfig(**sac_cfg.model_dump())
-                    )
-                )
-            tc_cfg = getattr(self.config, "time_consistency", None)
-            if tc_cfg is not None and getattr(tc_cfg, "enabled", False):
-                self.detectors.append(TimeConsistencyDetector(TimeConsistencyConfig(**tc_cfg.model_dump())))
+            self.detectors = build_default_detectors(self.config)
         self.fuser = fuser or EvidenceFuser(config)
         self.state_machine = state_machine or SupervisorStateMachine(config)
         self.report_writer = report_writer or ReplayReportWriter()
