@@ -20,6 +20,11 @@ python -m pip install -e ".[dev]"
 pytest -q
 ```
 
+
+## Architecture
+
+See [docs/architecture.md](docs/architecture.md) for the current pipeline structure and the distinction between the full replay path and the lightweight rule-based path.
+
 ## Platform-aware hover behavior
 
 `KinematicFeatureExtractor` accepts `PlatformConfig` so near-zero movement can
