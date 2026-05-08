@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -21,10 +22,15 @@ from pnt_supervisor.detectors import (
     TimeConsistencyDetector,
 )
 from pnt_supervisor.exports import TransitionEvent
-from pnt_supervisor.features import FeaturePipeline, TimeConsistencyFeatureExtractor
+from pnt_supervisor.features import (
+    FeatureExtractor,
+    FeaturePipeline,
+    TimeConsistencyFeatureExtractor,
+)
 from pnt_supervisor.fusion.evidence_fuser import EvidenceFuser
 from pnt_supervisor.fusion.state_machine import SupervisorStateMachine
 
+from .protocols import DetectorLike
 from .replay_epoch_row import build_replay_epoch_row
 from .report_writer import ReplayReportWriter
 
@@ -47,8 +53,8 @@ class ReplayRunner:
         config: Any | None = None,
         feature_pipeline: FeaturePipeline | None = None,
         # Deprecated: use feature_pipeline instead.
-        feature_extractors: list[Any] | None = None,
-        detectors: list[Any] | None = None,
+        feature_extractors: Sequence[FeatureExtractor] | None = None,
+        detectors: Sequence[DetectorLike] | None = None,
         fuser: EvidenceFuser | None = None,
         state_machine: SupervisorStateMachine | None = None,
         report_writer: ReplayReportWriter | None = None,
@@ -60,7 +66,7 @@ class ReplayRunner:
         if feature_pipeline is not None:
             self.feature_pipeline = feature_pipeline
         elif feature_extractors is not None:
-            self.feature_pipeline = FeaturePipeline(feature_extractors)
+            self.feature_pipeline = FeaturePipeline(list(feature_extractors))
         else:
             extractors = list(FeaturePipeline.default().extractors)
             extractors.append(
@@ -70,8 +76,9 @@ class ReplayRunner:
                 )
             )
             self.feature_pipeline = FeaturePipeline(extractors)
+        self.detectors: list[DetectorLike]
         if detectors is not None:
-            self.detectors = detectors
+            self.detectors = list(detectors)
         else:
             self.detectors = [
                 HardGatesDetector(),

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Sequence
+from typing import Any, Protocol
 
 from pnt_supervisor.core.models import EpochObservation, FeatureVector
 from pnt_supervisor.fusion.evidence_fuser import FusedEvidence
@@ -12,18 +13,31 @@ from pnt_supervisor.fusion.state_machine import StateSnapshot
 FEATURE_COLUMNS = ["jump_distance_m", "gap_ratio", "state_flap_count"]
 
 
-def detector_scores_by_name(detector_results: list[Any]) -> dict[str, float]:
+class DetectorResultLike(Protocol):
+    detector_name: str
+    score: float
+    metrics: dict[str, Any]
+    reason_codes: list[str]
+
+
+def detector_scores_by_name(
+    detector_results: Sequence[DetectorResultLike],
+) -> dict[str, float]:
     return {result.detector_name: result.score for result in detector_results}
 
 
-def metrics_for_detector(detector_results: list[Any], detector_name: str) -> dict[str, Any]:
+def metrics_for_detector(
+    detector_results: Sequence[DetectorResultLike], detector_name: str
+) -> dict[str, Any]:
     return next(
         (result.metrics for result in detector_results if result.detector_name == detector_name),
         {},
     )
 
 
-def reason_text_for_detector(detector_results: list[Any], detector_name: str) -> str:
+def reason_text_for_detector(
+    detector_results: Sequence[DetectorResultLike], detector_name: str
+) -> str:
     return next(
         (
             "|".join(result.reason_codes)
@@ -38,7 +52,7 @@ def build_replay_epoch_row(
     *,
     obs: EpochObservation,
     feature_vector: FeatureVector,
-    detector_results: list[Any],
+    detector_results: Sequence[DetectorResultLike],
     fused: FusedEvidence,
     snapshot: StateSnapshot,
 ) -> dict[str, Any]:
