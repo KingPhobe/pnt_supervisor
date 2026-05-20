@@ -55,3 +55,18 @@ In meeting slides, explain the quadcopter bypass as a **vehicle-profile-specific
 1. The bypass is intentional and scoped to the appropriate platform configuration.
 2. Monitoring/telemetry still runs, so anomalies remain visible.
 3. The plotted timelines (status + test flags + movement/speed/accel thresholds) provide evidence that the bypass behavior is understood and bounded.
+
+
+## Replay workflow from ArduPilot Excel
+
+Step 1:
+
+```
+py -m pnt_supervisor.evaluation.run_replay --input "Combined 25-05-13.xlsx" --input-format ardupilot_excel --sheet in --out-dir meeting_output
+```
+
+Step 2:
+
+```
+py tools/generate_meeting_figures.py --csv meeting_output/<epoch csv file> --out-dir meeting_figures --title-prefix "PNT Supervisor Flight Test"
+```
