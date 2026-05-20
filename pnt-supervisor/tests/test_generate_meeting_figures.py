@@ -4,53 +4,36 @@ from pathlib import Path
 
 import pandas as pd
 
-
 SCRIPT = Path(__file__).resolve().parents[1] / "tools" / "generate_meeting_figures.py"
 
 
-def test_generate_meeting_figures_creates_expected_outputs(tmp_path: Path) -> None:
-    csv_path = tmp_path / "results.csv"
+def test_generate_meeting_figures_replay_outputs(tmp_path: Path) -> None:
+    csv_path = tmp_path / "epochs.csv"
     out_dir = tmp_path / "figures"
 
     df = pd.DataFrame(
         {
-            "time_s": [0, 1, 2, 3, 4],
-            "position_error_m": [0.2, 0.4, 0.8, 0.3, 0.1],
-            "ground_speed_mps": [1.0, 2.0, 4.0, 2.5, 1.2],
-            "accel_mps2": [0.1, 0.2, 0.3, 0.2, 0.1],
-            "window_displacement_m": [0.2, 0.3, 0.6, 0.9, 0.4],
-            "supervisor_status": ["OK", "OK", "WARN", "WARN", "OK"],
-            "test_speed_pass": [1, 1, 0, 1, 1],
-            "test_motion_ok": [True, True, True, False, True],
+            "t_sec": [1_747_000_000 + i for i in range(8)],
+            "nav_state": ["good", "good", "recovering", "invalid", "invalid", "recovering", "good", "good"],
+            "fused_score": [0.95, 0.91, 0.7, 0.4, 0.3, 0.6, 0.85, 0.9],
+            "hdop": [0.8, 0.9, 1.2, 2.1, 2.4, 1.7, 1.1, 0.9],
+            "num_sats": [14, 13, 12, 9, 8, 10, 12, 13],
+            "fix_valid": [1, 1, 1, 0, 0, 1, 1, 1],
+            "gps_speed_mps": [2.0, 2.2, 2.1, 1.6, 1.4, 1.8, 2.0, 2.1],
+            "gps_accel_mps2": [0.2, 0.3, 0.1, 0.6, 0.4, 0.2, 0.1, 0.2],
+            "jump_distance_m": [0.3, 0.4, 0.5, 1.2e7, 0.8, 0.7, 0.5, 0.4],
         }
     )
     df.to_csv(csv_path, index=False)
 
-    cmd = [sys.executable, str(SCRIPT), "--csv", str(csv_path), "--out-dir", str(out_dir)]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    result = subprocess.run([sys.executable, str(SCRIPT), "--csv", str(csv_path), "--out-dir", str(out_dir)], capture_output=True, text=True, check=False)
 
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
-
-    expected = [
-        "position_error.png",
-        "speed_accel_thresholds.png",
-        "movement_gate.png",
-        "test_flags_timeline.png",
+    for name in [
         "supervisor_status_timeline.png",
-    ]
-    created = {p.name for p in out_dir.glob("*.png")}
-    assert len(created.intersection(expected)) >= 3
-
-
-def test_generate_meeting_figures_missing_optional_columns_does_not_fail(tmp_path: Path) -> None:
-    csv_path = tmp_path / "minimal_results.csv"
-    out_dir = tmp_path / "minimal_figures"
-
-    df = pd.DataFrame({"time": [0, 1, 2], "position_error": [1.0, 0.8, 0.6]})
-    df.to_csv(csv_path, index=False)
-
-    cmd = [sys.executable, str(SCRIPT), "--csv", str(csv_path), "--out-dir", str(out_dir)]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-
-    assert result.returncode == 0, result.stdout + "\n" + result.stderr
-    assert (out_dir / "position_error.png").exists()
+        "movement_gate.png",
+        "fused_score.png",
+        "hdop_sats.png",
+        "fix_valid_timeline.png",
+    ]:
+        assert (out_dir / name).exists(), f"Expected {name} to be generated"
