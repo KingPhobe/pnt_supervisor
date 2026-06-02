@@ -60,3 +60,58 @@ def test_generate_meeting_figures_replay_outputs(tmp_path: Path) -> None:
         "fix_valid_timeline.png",
     ]:
         assert (out_dir / name).exists(), f"Expected {name} to be generated"
+
+
+def test_reason_codes_default_ignore_skips_always_on_reason(tmp_path: Path) -> None:
+    csv_path = tmp_path / "epochs.csv"
+    out_dir = tmp_path / "figures"
+    pd.DataFrame(
+        {
+            "t_sec": [1, 2, 3],
+            "nav_state": ["good", "good", "good"],
+            "fused_score": [0.9, 0.88, 0.87],
+            "reasons": [
+                "NO_DECISION_INSUFFICIENT_VALID_SAMPLES",
+                "NO_DECISION_INSUFFICIENT_VALID_SAMPLES",
+                "NO_DECISION_INSUFFICIENT_VALID_SAMPLES",
+            ],
+        }
+    ).to_csv(csv_path, index=False)
+
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--csv", str(csv_path), "--out-dir", str(out_dir)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + "\n" + result.stderr
+    assert "all reason codes were filtered by --ignore-reasons" in result.stdout
+    assert not (out_dir / "reason_codes_timeline.png").exists()
+
+
+def test_reason_codes_ignore_reasons_can_be_overridden(tmp_path: Path) -> None:
+    csv_path = tmp_path / "epochs.csv"
+    out_dir = tmp_path / "figures"
+    pd.DataFrame(
+        {
+            "t_sec": [1, 2, 3],
+            "nav_state": ["good", "good", "good"],
+            "fused_score": [0.9, 0.88, 0.87],
+            "reasons": [
+                "NO_DECISION_INSUFFICIENT_VALID_SAMPLES",
+                "NO_DECISION_INSUFFICIENT_VALID_SAMPLES",
+                "NO_DECISION_INSUFFICIENT_VALID_SAMPLES",
+            ],
+        }
+    ).to_csv(csv_path, index=False)
+
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--csv", str(csv_path), "--out-dir", str(out_dir), "--ignore-reasons", ""],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + "\n" + result.stderr
+    assert (out_dir / "reason_codes_timeline.png").exists()
