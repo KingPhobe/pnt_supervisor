@@ -23,6 +23,7 @@ NUM_SATS_ALIASES = ["num_sats", "nsats", "satellites", "satellites_used", "GPS_0
 FIX_VALID_ALIASES = ["fix_valid", "gps_fix_valid", "valid_fix"]
 REASONS_ALIASES = ["reasons", "reason", "reason_codes"]
 EMPTY_REASON_VALUES = {"", "nan", "none", "null", "na", "n/a", "[]"}
+DEFAULT_IGNORE_REASONS = "NO_DECISION_INSUFFICIENT_VALID_SAMPLES"
 
 
 def find_column(df: pd.DataFrame, aliases: list[str]) -> str | None:
@@ -312,6 +313,7 @@ def plot_supervisor_status(df, x_col, x_label, status_col, out_dir, args):
     created = ["invalid_events_overview.png"]
     score_col = find_column(df, FUSED_SCORE_ALIASES)
     fix_col = find_column(df, FIX_VALID_ALIASES)
+    reason_col = find_column(df, REASONS_ALIASES)
     for plot_idx, (cluster_start, cluster_end, _) in enumerate(clusters[: args.max_invalid_zoom_plots], start=1):
         xmin = max(data_min, cluster_start - win)
         xmax = min(data_max, cluster_end + win)
@@ -319,28 +321,47 @@ def plot_supervisor_status(df, x_col, x_label, status_col, out_dir, args):
         if zoom.empty:
             continue
         fig, ax = plt.subplots(figsize=(10, 4))
+        ax2 = None
         _plot_status_base(ax, zoom, x_col, status_col, mapping)
         center = (cluster_start + cluster_end) / 2.0
         ax.axvline(center, color="red", linestyle="--", alpha=0.8, linewidth=1.1, label="invalid cluster center")
         if score_col is not None:
             ax2 = ax.twinx()
             score = pd.to_numeric(zoom[score_col], errors="coerce")
-            ax2.plot(zoom[x_col], score, color="tab:orange", alpha=0.6, linewidth=1.2, label="fused_score")
-            ax2.set_ylabel("Fused score / fix_valid")
+            ax2.plot(zoom[x_col], score, color="tab:orange", alpha=0.6, linewidth=1.2, label="fused score")
+            ax2.set_ylabel("Fused score / fix valid flag")
             ax2.set_ylim(-0.05, 1.05)
             if fix_col is not None:
                 fix = pd.to_numeric(zoom[fix_col], errors="coerce").fillna(0).clip(lower=0, upper=1)
-                ax2.step(zoom[x_col], fix, where="post", color="tab:green", alpha=0.35, linewidth=1.0, label="fix_valid")
+                ax2.step(zoom[x_col], fix, where="post", color="tab:green", alpha=0.35, linewidth=1.0, label="fix valid")
         elif fix_col is not None:
             ax2 = ax.twinx()
             fix = pd.to_numeric(zoom[fix_col], errors="coerce").fillna(0).clip(lower=0, upper=1)
-            ax2.step(zoom[x_col], fix, where="post", color="tab:green", alpha=0.35, linewidth=1.0, label="fix_valid")
-            ax2.set_ylabel("fix_valid")
+            ax2.step(zoom[x_col], fix, where="post", color="tab:green", alpha=0.35, linewidth=1.0, label="fix valid")
+            ax2.set_ylabel("Fix valid flag")
             ax2.set_ylim(-0.05, 1.05)
         ax.set_xlim(xmin, xmax)
         ax.set_xlabel(x_label)
         ax.set_title(f"{args.title_prefix + ' - ' if args.title_prefix else ''}Invalid Event Zoom {plot_idx:03d} ({xmin:.1f}–{xmax:.1f} {args.time_units})")
         ax.grid(True, axis="x", alpha=0.3)
+        lines, labels = ax.get_legend_handles_labels()
+        if ax2 is not None:
+            l2, lb2 = ax2.get_legend_handles_labels()
+            lines += l2
+            labels += lb2
+        ax.legend(lines, labels, loc="upper right")
+        if reason_col is not None:
+            active_reasons = sorted({code for value in zoom[reason_col] for code in _split_reason_codes(value)})
+            ax.text(
+                0.01,
+                0.98,
+                "Active reasons:\n" + _format_reason_codes(active_reasons),
+                transform=ax.transAxes,
+                va="top",
+                ha="left",
+                fontsize=8,
+                bbox={"boxstyle": "round,pad=0.3", "facecolor": "white", "edgecolor": "0.75", "alpha": 0.85},
+            )
         fig.tight_layout()
         filename = f"invalid_event_zoom_{plot_idx:03d}.png"
         fig.savefig(out_dir / filename, dpi=150)
@@ -359,8 +380,20 @@ def plot_fused_score(df, x_col, x_label, out_dir, args):
     marker = "o" if score.notna().sum() <= 40 else None
     fig, ax = plt.subplots(figsize=(10, 4))
     ax.plot(x_score, y_score, marker=marker, markersize=3 if marker else None, linewidth=1.5, label=col)
-    ax.axhline(0.8, linestyle="--", color="green", alpha=0.6, label="nominal guide (0.8)")
-    ax.axhline(0.5, linestyle="--", color="red", alpha=0.6, label="invalid guide (0.5)")
+    ax.axhline(
+        args.good_threshold,
+        linestyle="--",
+        color="green",
+        alpha=0.6,
+        label=f"GOOD threshold ({args.good_threshold:.2f})",
+    )
+    ax.axhline(
+        args.recovering_threshold,
+        linestyle="--",
+        color="red",
+        alpha=0.6,
+        label=f"RECOVERING threshold ({args.recovering_threshold:.2f})",
+    )
     status_col = find_column(df, STATUS_ALIASES)
     if status_col is not None:
         status = df[status_col].fillna("unknown").astype(str).str.lower()
@@ -457,21 +490,39 @@ def _split_reason_codes(value) -> list[str]:
     return parts
 
 
+def _parse_reason_code_csv(value: str) -> set[str]:
+    return {code.strip() for code in str(value).split(",") if code.strip()}
+
+
+def _format_reason_codes(codes: list[str], max_codes: int = 6) -> str:
+    if not codes:
+        return "none"
+    shown = codes[:max_codes]
+    suffix = f"\n+{len(codes) - max_codes} more" if len(codes) > max_codes else ""
+    return "\n".join(shown) + suffix
+
+
 def plot_reason_codes_timeline(df, x_col, x_label, out_dir, args):
     col = find_column(df, REASONS_ALIASES)
     if col is None:
         print("Warning: skipping reason_codes_timeline.png; no reasons column.")
         return False
     row_codes = df[col].apply(_split_reason_codes)
-    counts = Counter(code for codes in row_codes for code in codes)
+    ignored = _parse_reason_code_csv(args.ignore_reasons)
+    filtered_row_codes = row_codes.apply(lambda codes: [code for code in codes if code not in ignored])
+    counts = Counter(code for codes in filtered_row_codes for code in codes)
     if not counts:
-        print("Warning: skipping reason_codes_timeline.png; no non-empty reason codes.")
+        total_unfiltered = sum(len(codes) for codes in row_codes)
+        if total_unfiltered:
+            print("Warning: skipping reason_codes_timeline.png; all reason codes were filtered by --ignore-reasons.")
+        else:
+            print("Warning: skipping reason_codes_timeline.png; no non-empty reason codes.")
         return False
     top_codes = [code for code, _ in counts.most_common(args.reason_max_codes)]
     y_lookup = {code: idx for idx, code in enumerate(top_codes)}
     xs: list[float] = []
     ys: list[int] = []
-    for t, codes in zip(df[x_col], row_codes, strict=False):
+    for t, codes in zip(df[x_col], filtered_row_codes, strict=False):
         active = {code for code in codes if code in y_lookup}
         for code in active:
             xs.append(t)
@@ -508,6 +559,9 @@ def main() -> int:
     parser.add_argument("--clip-hdop", type=float, default=20.0)
     parser.add_argument("--max-invalid-zoom-plots", type=int, default=6)
     parser.add_argument("--reason-max-codes", type=int, default=12)
+    parser.add_argument("--good-threshold", type=float, default=0.70)
+    parser.add_argument("--recovering-threshold", type=float, default=0.55)
+    parser.add_argument("--ignore-reasons", default=DEFAULT_IGNORE_REASONS)
     parser.add_argument("--title-prefix", default="")
     args = parser.parse_args()
 
